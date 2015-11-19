@@ -55,7 +55,7 @@ function parseFile(entry, callback) {
                     fname: ChildKey.replace(/[ ]/g, "_"),
                     times: _.map(ChildVal, function (ChildVal1, ChildKey1) {
                         return overcount = overcount + ChildVal1.time;
-                    })[0],
+                    })[0]
                 }
             })[0]
         });
@@ -78,7 +78,7 @@ function parseFile(entry, callback) {
 }
 
 function writePages(entry, callback) {
-    var jsonSrc = _.each(entry, function (v,k,l){return _.pick(v, 'structure', 'fname', 'times')});
+    var jsonSrc = _.sortBy(entry, 'times').reverse();
     console.log('Number of Entries: ' + jsonSrc.length);
     console.log('It can be diced into: ' + Math.ceil(Number(jsonSrc.length) / Number(program.entries)) + ' Files');
     var first = 0;
@@ -116,7 +116,7 @@ readfile(function (callback) {
 			var end = new Date() - start;
 			var metadata = {
 				pages: meta
-			}
+			};
 			fs.writeFile('./' + outputValue + '/metadata.json', JSON.stringify(metadata), 'utf8', null);
 			console.log('Task Finished, %sms used for writing pages, %s file generated', end, meta);
 		});
