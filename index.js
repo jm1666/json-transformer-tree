@@ -92,7 +92,7 @@ function writePages(entry, callback) {
             if (first == 0) {
                 out = jsonSrc.slice(first, last);
             } else {
-                out = jsonSrc.slice(first + 1, last);
+                out = jsonSrc.slice(first, last);
             }
             fs.writeFile('./' + outputValue + '/pages/' + cnt + '.json', JSON.stringify(out), 'utf8', null);
         }
