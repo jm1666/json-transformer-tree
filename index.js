@@ -103,6 +103,7 @@ function writePages(entry, callback) {
 }
 function writeFile(entry, callback) {
 	var count = 0;
+    _.sortBy(entry, 'time').reverse();
     _.each(entry, function (val) {
 		count++;
 		fs.writeFile('./' + outputValue + '/detail/' + val.fname + '.json', JSON.stringify(val.examples), 'utf8', null);
