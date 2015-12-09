@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "commander": "^2.9.0",
+    "md5": "^2.0.0",
     "underscore": "^1.8.3"
   }
 }
