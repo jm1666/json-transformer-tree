@@ -2,6 +2,7 @@
 var fs = require('fs');
 var program = require('commander');
 var _ = require('underscore');
+var md5 = require('md5');
 
 var start = new Date();
 
@@ -53,6 +54,7 @@ function parseFile(entry, callback) {
                 return {
                     structure: ChildKey,
                     fname: ChildKey.replace(/[ ]/g, "_"),
+                    hashname: md5(ChildKey.replace(/[ ]/g, "_")),
                     times: _.map(ChildVal, function (ChildVal1, ChildKey1) {
                         return overcount = overcount + ChildVal1.time;
                     })[0]
@@ -62,11 +64,11 @@ function parseFile(entry, callback) {
 		var result2 = _.map(data, function (RootVal, RootKey) {
             return _.map(RootVal, function (ChildVal, ChildKey) {
 				return {
-					fname: ChildKey.replace(/[ ]/g, "_"),
+					fname: md5(ChildKey.replace(/[ ]/g, "_")),
 					examples: _.map(ChildVal, function (ChildVal1, ChildKey1) {
 					return {
-						sentence: ChildKey1,
-						path: ChildVal1.path.replace("tree/", "").replace(/[\/]/ig, ",").replace(".tree", ""),
+						sentence: ChildKey1.replace(/(o f)/g, "of").replace(/(o r)/g, "or").replace(/(i f)/g, "if"),
+						path: ChildVal1.path.replace("tree/", "").replace(/[\/]/ig, ",").replace(".tree", "").replace(/[_]/ig, " "),
 						time: ChildVal1.time
 						}
                     })
@@ -103,10 +105,9 @@ function writePages(entry, callback) {
 }
 function writeFile(entry, callback) {
 	var count = 0;
-    _.sortBy(entry, 'time').reverse();
     _.each(entry, function (val) {
 		count++;
-		fs.writeFile('./' + outputValue + '/detail/' + val.fname + '.json', JSON.stringify(val.examples), 'utf8', null);
+		fs.writeFile('./' + outputValue + '/detail/' + val.fname + '.json', JSON.stringify(_.sortBy(val.examples, 'time').reverse()), 'utf8', null);
     });
 	callback && callback(count);
 }
