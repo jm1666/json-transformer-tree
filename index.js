@@ -68,7 +68,7 @@ function parseFile(entry, callback) {
 					examples: _.map(ChildVal, function (ChildVal1, ChildKey1) {
 					return {
 						sentence: ChildKey1.replace(/(o f)/g, "of").replace(/(o r)/g, "or").replace(/(i f)/g, "if"),
-						path: ChildVal1.path.replace("tree/", "").replace(/[\/]/ig, ",").replace(".tree", "").replace(/[_]/ig, " "),
+						path: ChildVal1.path.replace(/(OCR_PDF\/)/g, "").replace("tree/", "").replace(/[\/]/ig, ",").replace(".tree", "").replace(/[_]/ig, " "),
 						time: ChildVal1.time
 						}
                     })
