@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-var fs = require('fs');
+var fs = require('graceful-fs');
 var program = require('commander');
 var _ = require('underscore');
 var md5 = require('md5');
