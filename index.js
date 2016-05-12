@@ -22,7 +22,10 @@ program.version('1.0.0')
 program.parse(process.argv);
 
 function readAsync(file, callback) {
-    fs.readFile(file, 'utf8', callback);
+    fs.readFile(file, 'utf8', function (err, data) {
+        if (err) throw err;
+        callback(null, data);
+    });
 }
 
 function parseFile(rFEntry, callback) {
@@ -52,16 +55,16 @@ function parseStructure(pfResult2, rFEntry1, callback) {
         item.forEach(function (item) {
             content.push({
                 name: item,
-                hashname: md5(item)
+                hashname: md5(item.replace(/[ ]/g, "_"))
             })
         });
         result.push({
             name: item[0],
-            hashname: md5(item[0]),
+            hashname: md5(item[0].replace(/[ ]/g, "_")),
             contents: content
         });
     });
-    callback(null, pFResult1, pfResult2, result);
+    callback(null, pfResult2, result);
 }
 
 function writeFile(pfResult2, pSResult, callback) {
@@ -110,6 +113,7 @@ async.map(cmdValue, readAsync, function (err, results) {
         };
         fs.writeFile('./' + outputValue + '/metadata.json', JSON.stringify(metadata), 'utf8', null);
         console.log('Task Finished, %sms used for writing Grouped Pages, %s file generated', end, result[0]);
+        end = new Date() - start;
         console.log('Task Finished, %sms used for writing detail, %s file generated', end, result[1]);
     });
 });
