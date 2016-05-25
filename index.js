@@ -11,7 +11,8 @@ var cmdValue = [];
 var outputValue = "";
 
 program.version('1.0.0')
-    .option('-e, --entries <n>', 'How Many Entries in a single file?', 10)
+    .option('-e, --entries <n>', 'How Many Entries in a single file?', 
+10)
     .arguments('<cmd1> <cmd2> <output> [dictionaryPath]')
     .action(function (cmd1, cmd2, output) {
         cmdValue[0] = cmd1;
@@ -30,24 +31,39 @@ function readAsync(file, callback) {
 
 function parseFile(rFEntry, callback) {
     var data = JSON.parse(rFEntry[0]);
+    var result1 = _.map(data, function (RootVal, RootKey) {
+        return _.map(RootVal, function (ChildVal, ChildKey) {
+            var overcount = 0;
+            return {
+                hashname: md5(ChildKey.replace(/[ ]/g, "_")),
+                times: _.map(ChildVal, function (ChildVal1, ChildKey1) {
+                    return overcount = overcount + ChildVal1.time;
+                })[0]
+            }
+        })[0]
+    });
     var result2 = _.map(data, function (RootVal, RootKey) {
         return _.map(RootVal, function (ChildVal, ChildKey) {
             return {
                 fname: md5(ChildKey.replace(/[ ]/g, "_")),
-                examples: _.map(ChildVal, function (ChildVal1, ChildKey1) {
+                examples: _.map(ChildVal, function (ChildVal1, 
+ChildKey1) {
                     return {
-                        sentence: ChildKey1.replace(/(o f)/g, "of").replace(/(o r)/g, "or").replace(/(i f)/g, "if"),
-                        path: ChildVal1.path.replace(/(OCR_PDF\/)/g, "").replace("tree/", "").replace(/[\/]/ig, ",").replace(".tree", "").replace(/[_]/ig, " "),
+                        sentence: ChildKey1.replace(/(o f)/g, 
+"of").replace(/(o r)/g, "or").replace(/(i f)/g, "if"),
+                        path: ChildVal1.path.replace(/(OCR_PDF\/)/g, 
+"").replace("tree/", "").replace(/[\/]/ig, ", ").replace(".tree", 
+"").replace(/[_]/ig, " "),
                         time: ChildVal1.time
                     }
                 })
             }
         })[0]
     });
-    callback(null, result2, rFEntry[1]);
+    callback(null, result1, result2, rFEntry[1]);
 }
 
-function parseStructure(pfResult2, rFEntry1, callback) {
+function parseStructure(pfResult1, pfResult2, rFEntry1, callback) {
     var data = JSON.parse(rFEntry1);
     var result = [];
     data.forEach(function (item) {
@@ -55,15 +71,21 @@ function parseStructure(pfResult2, rFEntry1, callback) {
         item.forEach(function (item) {
             content.push({
                 name: item,
-                hashname: md5(item.replace(/[ ]/g, "_"))
+                hashname: md5(item.replace(/[ ]/g, "_")),
+                count: _.where(pfResult1, {hashname: md5(item.replace(/[ 
+]/g, "_"))})[0].times
             })
         });
         result.push({
             name: item[0],
             hashname: md5(item[0].replace(/[ ]/g, "_")),
+            contentLength: content.length,
             contents: content
         });
     });
+    result = _.sortBy(result, function (item) {
+        return item.contents.length;
+    }).reverse();
     callback(null, pfResult2, result);
 }
 
@@ -71,14 +93,18 @@ function writeFile(pfResult2, pSResult, callback) {
     var count = 0;
     _.each(pfResult2, function (val) {
         count++;
-        fs.writeFile('./' + outputValue + '/detail/' + val.fname + '.json', JSON.stringify(_.sortBy(val.examples, 'time').reverse()), 'utf8', null);
+        fs.writeFile('./' + outputValue + '/detail/' + val.fname + 
+'.json', JSON.stringify(_.sortBy(val.examples, 'time').reverse()), 
+'utf8', null);
     });
     callback(null, pSResult, count);
 }
 
 function writeGroup(pSResult, wFResult, callback) {
     console.log('Number of Entries: ' + pSResult.length);
-    console.log('It can be diced into: ' + Math.ceil(Number(pSResult.length) / Number(program.entries)) + ' Files');
+    console.log('It can be diced into: ' + 
+Math.ceil(Number(pSResult.length) / Number(program.entries)) + ' 
+Files');
     var first = 0;
     var last = Number(program.entries);
     var cnt = 1;
@@ -92,10 +118,12 @@ function writeGroup(pSResult, wFResult, callback) {
             } else {
                 out = pSResult.slice(first, last);
             }
-            fs.writeFile('./' + outputValue + '/pages/' + cnt + '.json', JSON.stringify(out), 'utf8', null);
+            fs.writeFile('./' + outputValue + '/pages/' + cnt + '.json', 
+JSON.stringify(out), 'utf8', null);
         }
         out = pSResult.slice(first, pSResult.length);
-        fs.writeFile('./' + outputValue + '/pages/' + cnt + '.json', JSON.stringify(out), 'utf8', null);
+        fs.writeFile('./' + outputValue + '/pages/' + cnt + '.json', 
+JSON.stringify(out), 'utf8', null);
     }
     callback(null, [wFResult, cnt]);
 }
@@ -109,11 +137,14 @@ async.map(cmdValue, readAsync, function (err, results) {
     ], function (err, result) {
         var end = new Date() - start;
         var metadata = {
-            pages: result[0]
+            pages: result[1]
         };
-        fs.writeFile('./' + outputValue + '/metadata.json', JSON.stringify(metadata), 'utf8', null);
-        console.log('Task Finished, %sms used for writing Grouped Pages, %s file generated', end, result[0]);
+        fs.writeFile('./' + outputValue + '/metadata.json', 
+JSON.stringify(metadata), 'utf8', null);
+        console.log('Task Finished, %sms used for writing Grouped Pages, 
+%s file generated', end, result[1]);
         end = new Date() - start;
-        console.log('Task Finished, %sms used for writing detail, %s file generated', end, result[1]);
+        console.log('Task Finished, %sms used for writing detail, %s 
+file generated', end, result[0]);
     });
 });
